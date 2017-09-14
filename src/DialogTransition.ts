@@ -1,12 +1,13 @@
 
 import {AbstractTransition} from "./AbstractTransition";
 import {Phrase} from "./Phrase";
+import {Teller} from "./Teller";
 
 export class DialogTransition extends AbstractTransition {
-    private phrase: Phrase;
+    public phrase: Phrase;
 
-    constructor(phrase: Phrase) {
-        super();
+    constructor(phrase: Phrase, teller: Teller) {
+        super(teller);
         this.phrase = phrase;
     }
 

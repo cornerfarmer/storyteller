@@ -1,5 +1,6 @@
 
 import {Word} from "./Word";
+import {Vector} from "./Vector";
 
 export class Phrase {
     private words : Array<Word>;
@@ -21,7 +22,7 @@ export class Phrase {
     }
 
     private proceedCurrentWord(dt: number): boolean {
-        var left = this.words[this.currentWordIndex].proceed(dt);
+        let left = this.words[this.currentWordIndex].proceed(dt);
 
         if (left >= 0) {
             this.currentWordIndex++;
@@ -37,13 +38,37 @@ export class Phrase {
             this.calcWordPositions(context);
 
         for (let word of this.words)
-            word.write(context, 10);
+            word.write(context, new Vector(200, 100));
     }
 
     calcWordPositions(context) {
-        let x = 0;
-        for (let word of this.words)
-            x = word.calcPosition(context, x);
+        let pos = new Vector(0, 0);
+        let nextI = 0;
+        while (nextI < this.words.length)
+            nextI = this.calcWordPositionsForLine(context, pos, nextI);
+
         this.areWordPositionsCalculated = true;
+    }
+
+    calcWordPositionsForLine(context, startPos: Vector, startId: number): number {
+        let maxFontSize = 0;
+        for (let i = startId; i < this.words.length; i++) {
+            maxFontSize = Math.max(maxFontSize, this.words[i].font_size);
+            if (this.words[i].newLineAfterwards)
+                break;
+        }
+
+        let nextI;
+        for (let i = startId; i < this.words.length; i++) {
+            startPos.x = this.words[i].calcPosition(context, startPos, maxFontSize).x;
+            if (this.words[i].newLineAfterwards) {
+                nextI = i + 1;
+                break;
+            }
+        }
+
+        startPos.x = 0;
+        startPos.y += maxFontSize;
+        return nextI;
     }
 }

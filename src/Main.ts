@@ -7,6 +7,7 @@ import {Word} from "./Word";
 import {DialogTransition} from "./DialogTransition";
 import {Story} from "./Story";
 import {Character} from "./Character";
+import {Action} from "./Action";
 
 export class Main {
     private fps = 60;
@@ -21,21 +22,35 @@ export class Main {
 
         let character = new Character("Gulliver");
         this.story.addActor(character);
-        var phrase = new Phrase();
 
+        var phrase = new Phrase();
         let word = new Word("Bringt");
         word.font_size = 40;
         phrase.addWord(word);
 
         word = new Word("ihn");
-        word.font_size = 20;
         phrase.addWord(word);
 
         word = new Word("weg!");
-        word.font_size = 20;
         phrase.addWord(word);
-        this.teller.addTransition(new DialogTransition(phrase));
-        character.addActivePhrase(phrase);
+
+        let transition = new DialogTransition(phrase, this.teller);
+        this.teller.addTransition(transition);
+        character.setActivePhrase(phrase);
+
+        phrase = new Phrase();
+        word = new Word("Wehe");
+        word.font_size = 40;
+        phrase.addWord(word);
+
+        phrase.addWord(new Word("euch", true));
+        phrase.addWord(new Word("ich"));
+        phrase.addWord(new Word("seh"));
+        phrase.addWord(new Word("den", true));
+        phrase.addWord(new Word("hier"));
+        phrase.addWord(new Word("nochmal!", false, 30));
+
+        transition.addActionAfterEnd(new Action(1, new DialogTransition(phrase, this.teller), this.teller, character));
 
         var that = this;
         setInterval(function () {

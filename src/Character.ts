@@ -3,20 +3,20 @@ import {Phrase} from "./Phrase";
 
 export class Character extends Actor {
     private name: string;
-    private activePhrases: Array<Phrase>;
+    private activePhrase: Phrase;
 
     constructor(name: string) {
         super();
         this.name = name;
-        this.activePhrases = []
+        this.activePhrase = null
     }
 
-    addActivePhrase(phrase: Phrase) {
-        this.activePhrases.push(phrase);
+    setActivePhrase(phrase: Phrase) {
+        this.activePhrase = phrase;
     }
 
     write(context) {
-        for (let phrase of this.activePhrases)
-            phrase.write(context);
+        if (this.activePhrase !== null)
+            this.activePhrase.write(context);
     }
 }

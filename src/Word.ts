@@ -1,21 +1,26 @@
+import {Vector} from "./Vector";
+import measureText from "./measure-text";
+
 export class Word {
     public text: string;
     public speed: number;
     public font: string;
-    public font_size: number
+    public font_size: number;
     public color;
     public time: number;
     public pauseAfter: number;
-    private globalPosition: number;
+    private globalPosition: Vector;
+    public newLineAfterwards: boolean;
 
-    constructor(text: string) {
+    constructor(text: string, newLineAfterwards: boolean = false, font_size: number = 20) {
         this.text = text;
         this.speed = 1;
         this.font = "Georgia";
-        this.font_size = 20;
+        this.font_size = font_size;
         this.time = 0;
-        this.pauseAfter = 0.2;
-        this.speed = 0.02; 
+        this.pauseAfter = 0;
+        this.speed = 0.05;
+        this.newLineAfterwards = newLineAfterwards;
     }
 
     proceed(dt: number) {
@@ -34,19 +39,23 @@ export class Word {
 
     private prepareContext(context) {
         context.font = this.font_size + "px " + this.font;
+        //context.textBaseline="bottom";
     }
 
-    write(context, parentPosition) {
+    write(context, parentPosition: Vector) {
         if (this.time > 0) {
             this.prepareContext(context);
-            context.fillText(this.text.substring(0, this.time / this.speed), parentPosition + this.globalPosition, 50);
+            let pos = parentPosition.add(this.globalPosition);
+            context.fillText(this.text.substring(0, this.time / this.speed), pos.x, pos.y);
         }
     }
 
-
-    calcPosition(context, x: number): number {
+    calcPosition(context, globalPosition: Vector, maxFontSize: number): Vector {
         this.prepareContext(context);
-        this.globalPosition = x;
-        return context.measureText(this.text + " ").width + x;
+        this.globalPosition = globalPosition.clone();
+        this.globalPosition.y += maxFontSize;
+        //measureText();
+        let box = context.measureText(this.text + " ");
+        return new Vector(globalPosition.x + box.width, globalPosition.y);
     }
 }
