@@ -8,27 +8,34 @@ import {DialogTransition} from "./DialogTransition";
 import {Story} from "./Story";
 import {Character} from "./Character";
 import {Action} from "./Action";
+import {Editor} from "./Editor";
+import {Vector} from "./Vector";
+import {Interaction} from "./Interaction";
 
 export class Main {
     private fps = 60;
     private writer : Writer;
     private teller : Teller;
     private story: Story;
+    private editor: Editor;
+    private interaction: Interaction;
 
     constructor() {
         this.story = new Story();
         this.writer = new Writer(this.story);
         this.teller = new Teller();
+        this.editor = new Editor(this.teller);
+        this.interaction = new Interaction(this.writer.canvas, this.story, this.editor);
 
-        let character = new Character("Gulliver");
+        let character = new Character("Gulliver", new Vector(300, 300));
         this.story.addActor(character);
 
         var phrase = new Phrase();
-        let word = new Word("Bringt");
+        let word = new Word("Bringt ");
         word.font_size = 40;
         phrase.addWord(word);
 
-        word = new Word("ihn");
+        word = new Word("ihn ");
         phrase.addWord(word);
 
         word = new Word("weg!");
@@ -39,16 +46,16 @@ export class Main {
         character.setActivePhrase(phrase);
 
         phrase = new Phrase();
-        word = new Word("Wehe");
+        word = new Word("Wehe ");
         word.font_size = 40;
         phrase.addWord(word);
 
-        phrase.addWord(new Word("euch", true));
-        phrase.addWord(new Word("ich"));
-        phrase.addWord(new Word("seh"));
-        phrase.addWord(new Word("den", true));
-        phrase.addWord(new Word("hier"));
-        phrase.addWord(new Word("nochmal!", false, 30));
+        phrase.addWord(new Word("euch ", true));
+        phrase.addWord(new Word("ich "));
+        phrase.addWord(new Word("seh "));
+        phrase.addWord(new Word("den ", true));
+        phrase.addWord(new Word("hier "));
+        phrase.addWord(new Word(" nochmal!", false, 30));
 
         transition.addActionAfterEnd(new Action(1, new DialogTransition(phrase, this.teller), this.teller, character));
 
@@ -71,3 +78,4 @@ var main;
 window.onload = function () {
     main = new Main();
 };
+

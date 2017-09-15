@@ -1,7 +1,7 @@
 import {Actor} from "./Actor";
 
 export class Story {
-    private actors: Array<Actor>;
+    actors: Array<Actor>;
 
     constructor() {
         this.actors = []

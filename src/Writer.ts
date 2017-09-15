@@ -1,8 +1,8 @@
 import {Story} from "./Story";
 
 export class Writer {
-    private canvas;
-    private context;
+    public canvas;
+    public context;
     private width: number;
     private height: number;
     private story: Story;

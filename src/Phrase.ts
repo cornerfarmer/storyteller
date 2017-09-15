@@ -3,7 +3,7 @@ import {Word} from "./Word";
 import {Vector} from "./Vector";
 
 export class Phrase {
-    private words : Array<Word>;
+    public words : Array<Word>;
     private currentWordIndex: number;
     private areWordPositionsCalculated: boolean;
 
@@ -33,12 +33,12 @@ export class Phrase {
             return false;
     }
 
-    write(context) {
+    write(context, position) {
         if (!this.areWordPositionsCalculated)
             this.calcWordPositions(context);
 
         for (let word of this.words)
-            word.write(context, new Vector(200, 100));
+            word.write(context, position);
     }
 
     calcWordPositions(context) {
@@ -68,7 +68,11 @@ export class Phrase {
         }
 
         startPos.x = 0;
-        startPos.y += maxFontSize;
+        startPos.y += maxFontSize + 10;
         return nextI;
+    }
+
+    recalculatePositions() {
+        this.areWordPositionsCalculated = false;
     }
 }

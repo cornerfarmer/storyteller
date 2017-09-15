@@ -1,5 +1,4 @@
 import {Vector} from "./Vector";
-import measureText from "./measure-text";
 
 export class Word {
     public text: string;
@@ -39,7 +38,9 @@ export class Word {
 
     private prepareContext(context) {
         context.font = this.font_size + "px " + this.font;
-        //context.textBaseline="bottom";
+        context.textBaseline = "alphabetic";
+        context.fillStyle = "black";
+        context.textAlign = "left";
     }
 
     write(context, parentPosition: Vector) {
@@ -55,7 +56,7 @@ export class Word {
         this.globalPosition = globalPosition.clone();
         this.globalPosition.y += maxFontSize;
         //measureText();
-        let box = context.measureText(this.text + " ");
+        let box = context.measureText(this.text);
         return new Vector(globalPosition.x + box.width, globalPosition.y);
     }
 }
