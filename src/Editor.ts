@@ -28,10 +28,28 @@ export class Editor {
         this.$selection.empty();
         this.$selection.append("<h2>" + character.name + "</h2>");
         this.$selection.append("<h3>Dialogs</h3>");
+        for (let transition of character.transitions) {
+            if (transition instanceof DialogTransition) {
+                let dialog = "<div class=\"dialog\">";
+                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+
+                //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
+                //dialog += "</div>";
+                dialog += "</div>";
+
+                this.$selection.append(dialog);
+            }
+        }
         this.$selection.append("<button id=\"add-dialog-button\">Add dialog</button>");
         let that = this;
         $("#editor #add-dialog-button").click(function() {
             that.addDialogToCharacter(character);
+            $(this).blur();
+        });
+
+        this.$selection.append("<button id=\"play-button\">Play/Stop</button>");
+        $("#editor #play-button").click(function() {
+
         });
     }
 
@@ -42,22 +60,34 @@ export class Editor {
         this.nextInputIsNewWord = true;
     }
 
-
     enterText(text: string) {
         if (this.selectedPhrase !== null) {
             if (text === " ") {
                 this.nextInputIsNewWord = true;
-                return;
+            } else if (text === "\n") {
+                this.nextInputIsNewWord = true;
+                if (this.selectedPhrase.words.length > 0)
+                    this.selectedPhrase.words[this.selectedPhrase.words.length - 1].newLineAfterwards = true;
+            } else {
+                if (this.nextInputIsNewWord) {
+                    this.selectedPhrase.words.push(new Word(""));
+                    this.nextInputIsNewWord = false;
+                }
+                let word = this.selectedPhrase.words[this.selectedPhrase.words.length - 1];
+                word.text += text;
+                word.time = word.getTotalTime();
+                this.selectedPhrase.recalculatePositions();
             }
+        }
+    }
 
-            if (this.nextInputIsNewWord) {
-                this.selectedPhrase.words.push(new Word(""));
-                this.nextInputIsNewWord = false;
-            }
+    removeLastChar() {
+        if (this.selectedPhrase.words.length > 0) {
             let word = this.selectedPhrase.words[this.selectedPhrase.words.length - 1];
-            word.text += text;
-            word.time = word.getTotalTime();
-            this.selectedPhrase.recalculatePositions();
+            if (word.text.length > 1 || (word.text.length > 0 && this.selectedPhrase.words.length === 1))
+                word.text = word.text.substring(0, word.text.length - 1);
+            else if (this.selectedPhrase.words.length > 1)
+                this.selectedPhrase.words.pop();
         }
     }
 }

@@ -17,7 +17,12 @@ export class Interaction {
             that.onClick(that.getMousePos(canvas, evt));
         }, false);
         window.addEventListener('keypress', function(e) {
-            that.onKeyPress(e.key);
+             let key = "";
+             if (e.keyCode === 13)
+                 key = "\n";
+             else if (e.key.length === 1)
+                 key = e.key;
+             that.onKeyPress(key, e.keyCode === 8);
         });
     }
 
@@ -28,8 +33,11 @@ export class Interaction {
         }
     }
 
-    onKeyPress(key: string) {
-        this.editor.enterText(key);
+    onKeyPress(key: string, backspace: boolean) {
+        if (backspace)
+            this.editor.removeLastChar();
+        else
+            this.editor.enterText(key);
     }
 
     getMousePos(canvas, evt) {

@@ -60,7 +60,13 @@ export class Phrase {
 
         let nextI;
         for (let i = startId; i < this.words.length; i++) {
-            startPos.x = this.words[i].calcPosition(context, startPos, maxFontSize).x;
+            startPos.x = this.words[i].calcPosition(
+                context,
+                startPos,
+                maxFontSize,
+                startId !== i && this.words[i - 1].font_size < this.words[i].font_size,
+                i + 1 < this.words.length && !this.words[i].newLineAfterwards && this.words[i + 1].font_size <= this.words[i].font_size
+            ).x;
             if (this.words[i].newLineAfterwards) {
                 nextI = i + 1;
                 break;
@@ -74,5 +80,12 @@ export class Phrase {
 
     recalculatePositions() {
         this.areWordPositionsCalculated = false;
+    }
+
+    getTotalText() {
+        let text = "";
+        for (let word of this.words)
+            text += word.text + " ";
+        return text;
     }
 }
