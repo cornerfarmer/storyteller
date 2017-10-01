@@ -1,7 +1,7 @@
 import {Rect} from "./Rect";
 import {Phrase} from "./Phrase";
 import {Vector} from "./Vector";
-import {Transition} from "./AbstractTransition";
+import {Transition} from "./Transition";
 import {State} from "./State";
 
 export abstract class Actor {
@@ -24,7 +24,13 @@ export abstract class Actor {
         this.padding = new Vector(10, 5);
         this._transitions = [];
         this.states = [new State("Default")];
+        this.reset();
+    }
+
+    reset() {
         this.activeStates = [this.states[0]];
+        for (let transition of this._transitions)
+            transition.reset();
     }
 
     addTransition(transition: Transition) {

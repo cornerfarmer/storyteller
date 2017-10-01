@@ -32,6 +32,11 @@ export class Editor {
     constructor(teller: Teller, story: Story) {
         this.teller = teller;
         this.story = story;
+        this.initialize();
+        this.selectedPhrase = null;
+    }
+
+    initialize() {
         this.$inspectorDialogs = $("#editor #inspector #dialogs");
         this.$inspectorStates = $("#editor #inspector #states");
         this.$inspectorEvents = $("#editor #inspector #events");
@@ -39,7 +44,6 @@ export class Editor {
         $("#editor #inspector #add-event").click(function () {
             that.addEvent()
         });
-        this.selectedPhrase = null;
     }
 
     selectActor(actor: Actor) {
@@ -90,7 +94,7 @@ export class Editor {
 
             this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
             $("#editor #play-button").click(function () {
-
+                that.story.start();
             });
         }
     }

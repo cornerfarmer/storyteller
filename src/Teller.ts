@@ -2,18 +2,36 @@
 import {Transition} from "./Transition";
 import {Action} from "./Action";
 import {TransitionBasedEvent, TransitionBasedEventType} from "./TransitionBasedEvent";
+import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
+import {Story} from "./Story";
 
 export class Teller {
     private activeTransitions : Array<Transition>;
     private registeredActions : Array<Action>;
+    private story: Story;
 
     constructor() {
         this.activeTransitions = [];
         this.registeredActions = [];
     }
 
+    setStory(story: Story) {
+        this.story = story;
+    }
+
     addTransition(transition: Transition) {
         this.activeTransitions.push(transition);
+    }
+
+    raiseSceneBasedEvent(type: SceneBasedEventType) {
+        for (let actor of this.story.actors) {
+             for (let state of actor.activeStates) {
+                  for (let event of state.events) {
+                      if (event instanceof SceneBasedEvent && event.type === type)
+                          this.registeredActions.push(event.action);
+                  }
+             }
+        }
     }
 
     raiseTransitionBasedEvent(type: TransitionBasedEventType, transition: Transition) {

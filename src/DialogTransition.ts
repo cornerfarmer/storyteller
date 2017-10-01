@@ -16,4 +16,7 @@ export class DialogTransition extends Transition {
         return this.phrase.proceed(dt);
     }
 
+    public reset() {
+        this.phrase.reset();
+    }
 }

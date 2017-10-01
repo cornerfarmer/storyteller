@@ -18,12 +18,16 @@ export class Word {
         this.speed = 1;
         this.font = "Georgia";
         this.font_size = font_size;
-        this.time = 0;
         this.pauseAfter = 0;
         this.speed = 0.05;
         this.newLineAfterwards = newLineAfterwards;
         this.prefixSpace = false;
         this.suffixSpace = false;
+        this.reset();
+    }
+
+    reset() {
+        this.time = 0;
     }
 
     proceed(dt: number) {

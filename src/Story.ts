@@ -1,10 +1,22 @@
 import {Actor} from "./Actor";
+import {Scene} from "./Scene";
+import {Teller} from "./Teller";
 
 export class Story {
     actors: Array<Actor>;
+    scenes: Array<Scene>;
+    initialScene: Scene;
 
-    constructor() {
-        this.actors = []
+    constructor(teller: Teller) {
+        this.actors = [];
+        this.scenes = [new Scene("Default", teller)];
+        this.initialScene = this.scenes[0];
+    }
+
+    start() {
+        for (let actor of this.actors)
+            actor.reset();
+        this.initialScene.start();
     }
 
     getActors(): Array<Actor> {

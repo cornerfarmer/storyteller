@@ -21,9 +21,10 @@ export class Main {
     private interaction: Interaction;
 
     constructor() {
-        this.story = new Story();
-        this.writer = new Writer(this.story);
         this.teller = new Teller();
+        this.story = new Story(this.teller);
+        this.teller.setStory(this.story);
+        this.writer = new Writer(this.story);
         this.editor = new Editor(this.teller, this.story);
         this.interaction = new Interaction(this.writer.canvas, this.story, this.editor);
 

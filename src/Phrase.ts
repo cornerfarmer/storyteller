@@ -9,6 +9,12 @@ export class Phrase {
 
     constructor() {
         this.words = [];
+        this.reset();
+    }
+
+    reset() {
+        for (let word of this.words)
+            word.reset();
         this.currentWordIndex = 0;
         this.areWordPositionsCalculated = false;
     }
