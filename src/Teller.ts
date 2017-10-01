@@ -1,9 +1,10 @@
 
-import {AbstractTransition} from "./AbstractTransition";
+import {Transition} from "./Transition";
 import {Action} from "./Action";
+import {TransitionBasedEvent, TransitionBasedEventType} from "./TransitionBasedEvent";
 
 export class Teller {
-    private activeTransitions : Array<AbstractTransition>;
+    private activeTransitions : Array<Transition>;
     private registeredActions : Array<Action>;
 
     constructor() {
@@ -11,12 +12,18 @@ export class Teller {
         this.registeredActions = [];
     }
 
-    addTransition(transition: AbstractTransition) {
+    addTransition(transition: Transition) {
         this.activeTransitions.push(transition);
     }
 
-    registerAction(action: Action) {
-        this.registeredActions.push(action);
+    raiseTransitionBasedEvent(type: TransitionBasedEventType, transition: Transition) {
+        for (let state of transition.actor.activeStates) {
+            for (let event of state.events) {
+                if (event instanceof TransitionBasedEvent && event.type === type && event.transition === transition) {
+                    this.registeredActions.push(event.action);
+                }
+            }
+        }
     }
 
     tell(dt : number) {

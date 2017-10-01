@@ -24,7 +24,7 @@ export class Main {
         this.story = new Story();
         this.writer = new Writer(this.story);
         this.teller = new Teller();
-        this.editor = new Editor(this.teller);
+        this.editor = new Editor(this.teller, this.story);
         this.interaction = new Interaction(this.writer.canvas, this.story, this.editor);
 
         let character = new Character("Gulliver", new Vector(300, 300));
@@ -41,7 +41,7 @@ export class Main {
         word = new Word("weg!");
         phrase.addWord(word);
 
-        let transition = new DialogTransition(phrase, this.teller);
+        let transition = new DialogTransition(phrase, this.teller, character);
         //this.teller.addTransition(transition);
         //character.setActivePhrase(phrase);
 
@@ -57,7 +57,7 @@ export class Main {
         phrase.addWord(new Word("hier"));
         phrase.addWord(new Word("nochmal!", false, 30));
 
-        transition.addActionAfterEnd(new Action(1, new DialogTransition(phrase, this.teller), this.teller, character));
+        //transition.addActionAfterEnd(new Action(1, new DialogTransition(phrase, this.teller, character), this.teller, character));
 
         var that = this;
         setInterval(function () {

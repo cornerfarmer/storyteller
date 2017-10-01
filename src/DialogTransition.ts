@@ -1,13 +1,14 @@
 
-import {AbstractTransition} from "./AbstractTransition";
+import {Transition} from "./Transition";
 import {Phrase} from "./Phrase";
 import {Teller} from "./Teller";
+import {Actor} from "./Actor";
 
-export class DialogTransition extends AbstractTransition {
+export class DialogTransition extends Transition {
     public phrase: Phrase;
 
-    constructor(phrase: Phrase, teller: Teller) {
-        super(teller);
+    constructor(phrase: Phrase, teller: Teller, actor: Actor) {
+        super(teller, actor);
         this.phrase = phrase;
     }
 

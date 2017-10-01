@@ -1,7 +1,8 @@
 import {Rect} from "./Rect";
 import {Phrase} from "./Phrase";
 import {Vector} from "./Vector";
-import {AbstractTransition} from "./AbstractTransition";
+import {Transition} from "./AbstractTransition";
+import {State} from "./State";
 
 export abstract class Actor {
     public name: string;
@@ -10,7 +11,9 @@ export abstract class Actor {
     private width: number;
     private fontSize;
     private padding: Vector;
-    private _transitions: Array<AbstractTransition>;
+    private _transitions: Array<Transition>;
+    public states: Array<State>;
+    public activeStates: Array<State>;
 
     constructor(name: string, position: Vector) {
         this.name = name;
@@ -20,13 +23,15 @@ export abstract class Actor {
         this.fontSize = 20;
         this.padding = new Vector(10, 5);
         this._transitions = [];
+        this.states = [new State("Default")];
+        this.activeStates = [this.states[0]];
     }
 
-    addTransition(transition: AbstractTransition) {
+    addTransition(transition: Transition) {
         this._transitions.push(transition);
     }
 
-    get transitions(): Array<AbstractTransition> {
+    get transitions(): Array<Transition> {
         return this._transitions;
     }
 

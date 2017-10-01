@@ -1,16 +1,16 @@
 
-import {AbstractTransition} from "./AbstractTransition";
+import {Transition} from "./Transition";
 import {Teller} from "./Teller";
 import {Character} from "./Character";
 import {DialogTransition} from "./DialogTransition";
 
 export class Action {
     public delay: number;
-    public transition: AbstractTransition;
+    public transition: Transition;
     public teller: Teller;
     public character: Character;
 
-    constructor(delay: number, transition: AbstractTransition, teller: Teller, character: Character) {
+    constructor(delay: number, transition: Transition, teller: Teller, character: Character) {
         this.delay = delay;
         this.transition = transition;
         this.teller = teller;

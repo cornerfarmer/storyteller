@@ -6,16 +6,39 @@ import {DialogTransition} from "./DialogTransition";
 import {Phrase} from "./Phrase";
 import {Teller} from "./Teller";
 import {Word} from "./Word";
+import {State} from "./State";
+import {TransitionBasedEvent, TransitionBasedEventType} from "./TransitionBasedEvent";
+import {Story} from "./Story";
+import {Event} from "./Event";
+import {Action} from "./Action";
+import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
+
+enum EventTypes {
+    Transition,
+    Scene
+}
 
 export class Editor {
-    private $selection;
+    private $inspectorDialogs;
+    private $inspectorStates;
+    private $inspectorEvents;
+    private selectedActor: Actor;
+    private selectedState: State;
     private teller: Teller;
+    private story: Story;
     private selectedPhrase: Phrase;
     private nextInputIsNewWord: boolean;
 
-    constructor(teller: Teller) {
+    constructor(teller: Teller, story: Story) {
         this.teller = teller;
-        this.$selection = $("#editor #selection");
+        this.story = story;
+        this.$inspectorDialogs = $("#editor #inspector #dialogs");
+        this.$inspectorStates = $("#editor #inspector #states");
+        this.$inspectorEvents = $("#editor #inspector #events");
+        let that = this;
+        $("#editor #inspector #add-event").click(function () {
+            that.addEvent()
+        });
         this.selectedPhrase = null;
     }
 
@@ -25,39 +48,183 @@ export class Editor {
     }
 
     selectCharacter(character: Character) {
-        this.$selection.empty();
-        this.$selection.append("<h2>" + character.name + "</h2>");
-        this.$selection.append("<h3>Dialogs</h3>");
-        for (let transition of character.transitions) {
-            if (transition instanceof DialogTransition) {
-                let dialog = "<div class=\"dialog\">";
-                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+        this.selectedActor = character;
+        this.selectedState = character.states[0];
+        this.refreshInspector();
+    }
 
-                //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
-                //dialog += "</div>";
-                dialog += "</div>";
+    selectState(state: State) {
+        this.selectedState = state;
+        this.refreshEvents();
+    }
 
-                this.$selection.append(dialog);
+    refreshInspector() {
+        this.refreshDialogs();
+        this.refreshStates();
+        this.refreshEvents();
+    }
+
+    refreshDialogs() {
+        if (this.selectedActor instanceof Character) {
+            this.$inspectorDialogs.empty();
+            this.$inspectorDialogs.append("<h2>" + this.selectedActor.name + "</h2>");
+            this.$inspectorDialogs.append("<h3>Dialogs</h3>");
+            for (let transition of this.selectedActor.transitions) {
+                if (transition instanceof DialogTransition) {
+                    let dialog = "<div class=\"dialog\">";
+                    dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+
+                    //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
+                    //dialog += "</div>";
+                    dialog += "</div>";
+
+                    this.$inspectorDialogs.append(dialog);
+                }
+            }
+            this.$inspectorDialogs.append("<button id=\"add-dialog-button\">Add dialog</button>");
+            let that = this;
+            $("#editor #add-dialog-button").click(function () {
+                that.addDialogToCharacter(that.selectedActor);
+                $(this).blur();
+            });
+
+            this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
+            $("#editor #play-button").click(function () {
+
+            });
+        }
+    }
+
+    refreshStates() {
+        if (this.selectedActor instanceof Character) {
+            this.$inspectorStates.empty();
+            this.$inspectorStates.append("<h3>States</h3>");
+            let that = this;
+            for (let state of this.selectedActor.states) {
+                $("<div>" + state.name + "</div>").appendTo(this.$inspectorStates).click(function () {
+                    that.selectState(state);
+                });
             }
         }
-        this.$selection.append("<button id=\"add-dialog-button\">Add dialog</button>");
+    }
+
+    getTypeOfEvent(event: Event) {
+        if (event instanceof TransitionBasedEvent)
+            return EventTypes.Transition;
+        else if (event instanceof SceneBasedEvent)
+            return EventTypes.Scene;
+    }
+
+    getEventTypesForEvent(event: Event) {
+        if (event instanceof TransitionBasedEvent)
+            return TransitionBasedEventType;
+        else if (event instanceof SceneBasedEvent)
+            return SceneBasedEventType;
+    }
+
+    createFormHtmlForEvent(event: Event) {
+
+        let form = "<select class=\"type-select\">";
+        for (let type in EventTypes) {
+            if (isNaN(Number(type)))
+                form += "<option value=\"" + EventTypes[type] + "\" " + (this.getTypeOfEvent(event) == EventTypes[type] ? "selected":"") + ">" + type + "</option>";
+        }
+        form += "</select>";
+
+        form += "<select class=\"event-type-select\">";
+        let eventTypes = this.getEventTypesForEvent(event);
+        for (let eventType in eventTypes) {
+            if (isNaN(Number(eventType)))
+                form += "<option value=\"" + eventTypes[eventType] + "\" " + (event.type == eventTypes[eventType] ? "selected":"") + ">" + eventType + "</option>";
+        }
+        form += "</select>";
+
+        if (event instanceof TransitionBasedEvent) {
+            form += "<select class=\"actor-select\">";
+            for (let actorId in this.story.actors)
+                form += "<option value=\"" + actorId + "\" " + (event.actor === this.story.actors[actorId] ? "selected":"") + ">" + this.story.actors[actorId].name + "</option>";
+            form += "</select>";
+
+            form += "<select class=\"transition-select\">";
+            for (let transitionId in event.actor.transitions)
+                form += "<option value=\"" + transitionId + "\" " + (event.transition === event.actor.transitions[transitionId] ? "selected":"") + ">" + event.actor.transitions[transitionId].phrase.getTotalText() + "</option>";
+            form += "</select>";
+        }
+
+        form += "<select class=\"action-transition-select\">";
+        for (let transitionId in this.selectedActor.transitions)
+            form += "<option value=\"" + transitionId + "\" " + (event.action.transition === this.selectedActor.transitions[transitionId] ? "selected":"") + ">" + this.selectedActor.transitions[transitionId].phrase.getTotalText() + "</option>";
+        form += "</select>";
+
+        return form;
+    }
+
+    registerListenerForEventForm(event: Event, index: number) {
         let that = this;
-        $("#editor #add-dialog-button").click(function() {
-            that.addDialogToCharacter(character);
-            $(this).blur();
+
+        $("#event-" + index + " .type-select").change(function () {
+            if ($(this).val() == EventTypes.Scene)
+                that.selectedState.events[index] = new SceneBasedEvent(SceneBasedEventType.OnSceneStarts, that.selectedState.events[index].action);
+            else if ($(this).val() == EventTypes.Transition)
+                that.selectedState.events[index] = new TransitionBasedEvent(TransitionBasedEventType.OnTransitionEnds, that.selectedState.events[index].action, that.selectedActor, that.selectedActor.transitions[0]);
+            that.refreshEvents();
         });
 
-        this.$selection.append("<button id=\"play-button\">Play/Stop</button>");
-        $("#editor #play-button").click(function() {
-
+        $("#event-" + index + " .event-type-select").change(function () {
+            event.type = $(this).val();
         });
+
+        if (event instanceof TransitionBasedEvent) {
+            $("#event-" + index + " .actor-select").change(function () {
+                event.actor = that.story.actors[$(this).val()];
+                that.refreshEvents();
+            });
+
+            $("#event-" + index + " .transition-select").change(function () {
+                event.transition = event.actor.transitions[$(this).val()];
+            });
+        }
+
+        $("#event-" + index + " .action-transition-select").change(function () {
+            event.action.transition = that.selectedActor.transitions[$(this).val()];
+        });
+    }
+
+    refreshEvents() {
+        if (this.selectedActor instanceof Character) {
+            this.$inspectorEvents.empty();
+            this.$inspectorEvents.append("<h3>Events</h3>");
+
+            let i = 0;
+            for (let event of this.selectedState.events) {
+                let form = "<div id=\"event-" + i + "\">";
+
+                form += this.createFormHtmlForEvent(event);
+
+                form += "</div>";
+
+                this.$inspectorEvents.append(form);
+
+                this.registerListenerForEventForm(event, i);
+
+                i++;
+            }
+        }
     }
 
     addDialogToCharacter(character: Character) {
         this.selectedPhrase = new Phrase();
-        character.addTransition(new DialogTransition(this.selectedPhrase, this.teller));
+        character.addTransition(new DialogTransition(this.selectedPhrase, this.teller, character));
         character.setActivePhrase(this.selectedPhrase);
         this.nextInputIsNewWord = true;
+    }
+
+    addEvent() {
+        if (this.selectedActor.transitions.length > 0) {
+            let action = new Action(0, this.selectedActor.transitions[0], this.teller, this.selectedActor);
+            this.selectedState.events.push(new TransitionBasedEvent(TransitionBasedEventType.OnTransitionEnds, action, this.selectedActor, this.selectedActor.transitions[0]));
+            this.refreshEvents();
+        }
     }
 
     enterText(text: string) {
@@ -77,6 +244,7 @@ export class Editor {
                 word.text += text;
                 word.time = word.getTotalTime();
                 this.selectedPhrase.recalculatePositions();
+                this.refreshInspector();
             }
         }
     }
