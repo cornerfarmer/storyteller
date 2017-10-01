@@ -12,10 +12,12 @@ import {Story} from "./Story";
 import {Event} from "./Event";
 import {Action} from "./Action";
 import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
+import {ConversationBasedEvent, ConversationBasedEventType} from "./ConversationBasedEvent";
 
 enum EventTypes {
     Transition,
-    Scene
+    Scene,
+    Conversation
 }
 
 export class Editor {
@@ -28,12 +30,14 @@ export class Editor {
     private story: Story;
     private selectedPhrase: Phrase;
     private nextInputIsNewWord: boolean;
+    public isActive: boolean;
 
     constructor(teller: Teller, story: Story) {
         this.teller = teller;
         this.story = story;
         this.initialize();
         this.selectedPhrase = null;
+        this.isActive = true;
     }
 
     initialize() {
@@ -95,6 +99,7 @@ export class Editor {
             this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
             $("#editor #play-button").click(function () {
                 that.story.start();
+                that.isActive = false;
             });
         }
     }
@@ -117,6 +122,8 @@ export class Editor {
             return EventTypes.Transition;
         else if (event instanceof SceneBasedEvent)
             return EventTypes.Scene;
+        else if (event instanceof ConversationBasedEvent)
+            return EventTypes.Conversation;
     }
 
     getEventTypesForEvent(event: Event) {
@@ -124,6 +131,8 @@ export class Editor {
             return TransitionBasedEventType;
         else if (event instanceof SceneBasedEvent)
             return SceneBasedEventType;
+        else if (event instanceof ConversationBasedEvent)
+            return ConversationBasedEventType;
     }
 
     createFormHtmlForEvent(event: Event) {
@@ -153,6 +162,11 @@ export class Editor {
             for (let transitionId in event.actor.transitions)
                 form += "<option value=\"" + transitionId + "\" " + (event.transition === event.actor.transitions[transitionId] ? "selected":"") + ">" + event.actor.transitions[transitionId].phrase.getTotalText() + "</option>";
             form += "</select>";
+        } else if (event instanceof ConversationBasedEvent) {
+            form += "<select class=\"intent-select\">";
+            for (let intent of ConversationBasedEvent.intents)
+                form += "<option value=\"" + intent + "\" " + (event.intent === intent ? "selected":"") + ">" + intent + "</option>";
+            form += "</select>";
         }
 
         form += "<select class=\"action-transition-select\">";
@@ -171,6 +185,8 @@ export class Editor {
                 that.selectedState.events[index] = new SceneBasedEvent(SceneBasedEventType.OnSceneStarts, that.selectedState.events[index].action);
             else if ($(this).val() == EventTypes.Transition)
                 that.selectedState.events[index] = new TransitionBasedEvent(TransitionBasedEventType.OnTransitionEnds, that.selectedState.events[index].action, that.selectedActor, that.selectedActor.transitions[0]);
+            else if ($(this).val() == EventTypes.Conversation)
+                that.selectedState.events[index] = new ConversationBasedEvent(ConversationBasedEventType.OnTalk, that.selectedState.events[index].action, ConversationBasedEvent.intents[0]);
             that.refreshEvents();
         });
 
@@ -186,6 +202,10 @@ export class Editor {
 
             $("#event-" + index + " .transition-select").change(function () {
                 event.transition = event.actor.transitions[$(this).val()];
+            });
+        } else if (event instanceof ConversationBasedEvent) {
+            $("#event-" + index + " .intent-select").change(function () {
+                event.intent = $(this).val();
             });
         }
 

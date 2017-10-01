@@ -34,10 +34,17 @@ export class Interaction {
     }
 
     onKeyPress(key: string, backspace: boolean) {
-        if (backspace)
-            this.editor.removeLastChar();
-        else
-            this.editor.enterText(key);
+        if (this.editor.isActive) {
+            if (backspace)
+                this.editor.removeLastChar();
+            else
+                this.editor.enterText(key);
+        } else {
+            if (backspace)
+                this.story.player.removeLastChar();
+            else
+                this.story.player.enterText(key);
+        }
     }
 
     getMousePos(canvas, evt) {

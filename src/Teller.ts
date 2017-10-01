@@ -4,6 +4,8 @@ import {Action} from "./Action";
 import {TransitionBasedEvent, TransitionBasedEventType} from "./TransitionBasedEvent";
 import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
 import {Story} from "./Story";
+import {Actor} from "./Actor";
+import {ConversationBasedEvent, ConversationBasedEventType} from "./ConversationBasedEvent";
 
 export class Teller {
     private activeTransitions : Array<Transition>;
@@ -38,6 +40,16 @@ export class Teller {
         for (let state of transition.actor.activeStates) {
             for (let event of state.events) {
                 if (event instanceof TransitionBasedEvent && event.type === type && event.transition === transition) {
+                    this.registeredActions.push(event.action);
+                }
+            }
+        }
+    }
+
+    raiseConversationBasedEvent(type: ConversationBasedEventType, partner: Actor, intent: String) {
+        for (let state of partner.activeStates) {
+            for (let event of state.events) {
+                if (event instanceof ConversationBasedEvent && event.type === type && event.intent === intent) {
                     this.registeredActions.push(event.action);
                 }
             }

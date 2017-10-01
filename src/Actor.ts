@@ -42,6 +42,8 @@ export abstract class Actor {
     }
 
     setActivePhrase(phrase: Phrase) {
+        if (this.activePhrase !== null)
+            this.activePhrase.reset();
         this.activePhrase = phrase;
     }
 

@@ -11,6 +11,7 @@ import {Action} from "./Action";
 import {Editor} from "./Editor";
 import {Vector} from "./Vector";
 import {Interaction} from "./Interaction";
+import {AI} from "./AI";
 
 export class Main {
     private fps = 60;
@@ -30,6 +31,7 @@ export class Main {
 
         let character = new Character("Gulliver", new Vector(300, 300));
         this.story.addActor(character);
+        this.story.player.talkPartner = character;
 
         var phrase = new Phrase();
         let word = new Word("Bringt");
