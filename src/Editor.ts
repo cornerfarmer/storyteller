@@ -13,6 +13,8 @@ import {Event} from "./Event";
 import {Action} from "./Action";
 import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
 import {ConversationBasedEvent, ConversationBasedEventType} from "./ConversationBasedEvent";
+import {MovementTransition} from "./MovementTransition";
+import {Vector} from "./Vector";
 
 enum EventTypes {
     Transition,
@@ -22,15 +24,18 @@ enum EventTypes {
 
 export class Editor {
     private $inspectorDialogs;
+    private $inspectorMovements;
     private $inspectorStates;
     private $inspectorEvents;
     private selectedActor: Actor;
     private selectedState: State;
+    private selectedMovement: MovementTransition;
     private teller: Teller;
     private story: Story;
     private selectedPhrase: Phrase;
     private nextInputIsNewWord: boolean;
     public isActive: boolean;
+    private selectedMovementPoint: Vector;
 
     constructor(teller: Teller, story: Story) {
         this.teller = teller;
@@ -42,6 +47,7 @@ export class Editor {
 
     initialize() {
         this.$inspectorDialogs = $("#editor #inspector #dialogs");
+        this.$inspectorMovements = $("#editor #inspector #movements");
         this.$inspectorStates = $("#editor #inspector #states");
         this.$inspectorEvents = $("#editor #inspector #events");
         let that = this;
@@ -68,40 +74,67 @@ export class Editor {
 
     refreshInspector() {
         this.refreshDialogs();
+        this.refreshMovements();
         this.refreshStates();
         this.refreshEvents();
     }
 
     refreshDialogs() {
-        if (this.selectedActor instanceof Character) {
-            this.$inspectorDialogs.empty();
-            this.$inspectorDialogs.append("<h2>" + this.selectedActor.name + "</h2>");
-            this.$inspectorDialogs.append("<h3>Dialogs</h3>");
-            for (let transition of this.selectedActor.transitions) {
-                if (transition instanceof DialogTransition) {
-                    let dialog = "<div class=\"dialog\">";
-                    dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+        this.$inspectorDialogs.empty();
+        this.$inspectorDialogs.append("<h2>" + this.selectedActor.name + "</h2>");
+        this.$inspectorDialogs.append("<h3>Dialogs</h3>");
+        for (let transition of this.selectedActor.transitions) {
+            if (transition instanceof DialogTransition) {
+                let dialog = "<div class=\"dialog\">";
+                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
 
-                    //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
-                    //dialog += "</div>";
-                    dialog += "</div>";
+                //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
+                //dialog += "</div>";
+                dialog += "</div>";
 
-                    this.$inspectorDialogs.append(dialog);
-                }
+                this.$inspectorDialogs.append(dialog);
             }
-            this.$inspectorDialogs.append("<button id=\"add-dialog-button\">Add dialog</button>");
-            let that = this;
-            $("#editor #add-dialog-button").click(function () {
-                that.addDialogToCharacter(that.selectedActor);
-                $(this).blur();
-            });
-
-            this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
-            $("#editor #play-button").click(function () {
-                that.story.start();
-                that.isActive = false;
-            });
         }
+        this.$inspectorDialogs.append("<button id=\"add-dialog-button\">Add dialog</button>");
+        let that = this;
+        $("#editor #add-dialog-button").click(function () {
+            that.addDialogToCharacter(that.selectedActor);
+            $(this).blur();
+        });
+
+        this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
+        $("#editor #play-button").click(function () {
+            that.story.start();
+            that.isActive = false;
+        });
+    }
+
+    refreshMovements() {
+        this.$inspectorMovements.empty();
+        this.$inspectorMovements.append("<h3>Movements</h3>");
+        for (let transition of this.selectedActor.transitions) {
+            if (transition instanceof MovementTransition) {
+                let dialog = "<div class=\"movement\">";
+                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+
+                dialog += "</div>";
+
+                this.$inspectorMovements.append(dialog);
+            }
+        }
+        this.$inspectorMovements.append("<button id=\"add-movement-button\">Add movement</button>");
+        this.$inspectorMovements.append("<button id=\"add-point-button\">Add point</button>");
+        let that = this;
+        $("#editor #add-movement-button").click(function () {
+            that.addMovementToCharacter(that.selectedActor);
+            $(this).blur();
+        });
+
+        $("#editor #add-point-button").click(function () {
+            that.addPointToMovement();
+            $(this).blur();
+        });
+
     }
 
     refreshStates() {
@@ -243,6 +276,16 @@ export class Editor {
         this.nextInputIsNewWord = true;
     }
 
+    addMovementToCharacter(character: Character) {
+        this.selectedMovement = new MovementTransition(this.teller, character, character.position.clone(), character.position.add(new Vector(200, 0)));
+        character.addTransition(this.selectedMovement);
+    }
+
+    addPointToMovement() {
+        let lastIndex = this.selectedMovement.points.length - 1;
+        this.selectedMovement.add(this.selectedMovement.points[lastIndex].add(this.selectedMovement.vectors[lastIndex].mul(3)), this.selectedMovement.vectors[lastIndex]);
+    }
+
     addEvent() {
         if (this.selectedActor.transitions.length > 0) {
             let action = new Action(0, this.selectedActor.transitions[0], this.teller, this.selectedActor);
@@ -280,6 +323,33 @@ export class Editor {
                 word.text = word.text.substring(0, word.text.length - 1);
             else if (this.selectedPhrase.words.length > 1)
                 this.selectedPhrase.words.pop();
+        }
+    }
+
+    write(context) {
+        if (this.selectedMovement)
+            this.selectedMovement.drawDebug(context);
+    }
+
+    onMouseUp(pos: Vector) {
+        for (let actor of this.story.actors) {
+            if (actor.getRect().contains(pos))
+                this.selectActor(actor);
+        }
+
+        this.selectedMovementPoint = null;
+    }
+
+    onMouseDown(pos: Vector) {
+        if (this.selectedMovement) {
+            this.selectedMovementPoint = this.selectedMovement.ray(pos);
+        }
+    }
+
+    onMouseMove(pos: Vector) {
+        if (this.selectedMovementPoint) {
+            this.selectedMovementPoint.x = pos.x;
+            this.selectedMovementPoint.y = pos.y;
         }
     }
 }

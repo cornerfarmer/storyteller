@@ -11,6 +11,10 @@ export class Vector {
         return new Vector(this.x + otherVector.x, this.y + otherVector.y);
     }
 
+    mul(factor: number): Vector {
+        return new Vector(this.x * factor, this.y * factor);
+    }
+
     clone(): Vector {
         return new Vector(this.x, this.y);
     }

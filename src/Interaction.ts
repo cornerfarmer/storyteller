@@ -13,8 +13,14 @@ export class Interaction {
         this.editor = editor;
 
         let that = this;
-        canvas.addEventListener('click', function(evt) {
-            that.onClick(that.getMousePos(canvas, evt));
+        canvas.addEventListener('mousedown', function(evt) {
+            that.onMouseDown(that.getMousePos(canvas, evt));
+        }, false);
+        canvas.addEventListener('mouseup', function(evt) {
+            that.onMouseUp(that.getMousePos(canvas, evt));
+        }, false);
+        canvas.addEventListener('mousemove', function(evt) {
+            that.onMouseMove(that.getMousePos(canvas, evt));
         }, false);
         window.addEventListener('keypress', function(e) {
              let key = "";
@@ -26,10 +32,21 @@ export class Interaction {
         });
     }
 
-    onClick(pos: Vector) {
-        for (let actor of this.story.actors) {
-            if (actor.getRect().contains(pos))
-                this.editor.selectActor(actor);
+    onMouseDown(pos: Vector) {
+        if (this.editor.isActive) {
+            this.editor.onMouseDown(pos);
+        }
+    }
+
+    onMouseUp(pos: Vector) {
+        if (this.editor.isActive) {
+            this.editor.onMouseUp(pos);
+        }
+    }
+
+    onMouseMove(pos: Vector) {
+        if (this.editor.isActive) {
+            this.editor.onMouseMove(pos);
         }
     }
 

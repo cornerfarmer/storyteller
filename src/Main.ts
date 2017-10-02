@@ -25,8 +25,8 @@ export class Main {
         this.teller = new Teller();
         this.story = new Story(this.teller);
         this.teller.setStory(this.story);
-        this.writer = new Writer(this.story);
         this.editor = new Editor(this.teller, this.story);
+        this.writer = new Writer(this.story, this.editor);
         this.interaction = new Interaction(this.writer.canvas, this.story, this.editor);
 
         let character = new Character("Gulliver", new Vector(300, 300));
