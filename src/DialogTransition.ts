@@ -19,4 +19,8 @@ export class DialogTransition extends Transition {
     public reset() {
         this.phrase.reset();
     }
+
+    public getLabel(): string {
+        return this.phrase.getTotalText();
+    }
 }

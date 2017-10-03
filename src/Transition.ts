@@ -22,4 +22,5 @@ export abstract class Transition {
 
     protected abstract internProceed(dt: number): boolean;
     public abstract reset();
+    public abstract getLabel(): string;
 }

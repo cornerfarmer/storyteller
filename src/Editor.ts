@@ -35,7 +35,7 @@ export class Editor {
     private selectedPhrase: Phrase;
     private nextInputIsNewWord: boolean;
     public isActive: boolean;
-    private selectedMovementPoint: Vector;
+    private selectedMovementPointId: number;
 
     constructor(teller: Teller, story: Story) {
         this.teller = teller;
@@ -115,7 +115,7 @@ export class Editor {
         for (let transition of this.selectedActor.transitions) {
             if (transition instanceof MovementTransition) {
                 let dialog = "<div class=\"movement\">";
-                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
+                dialog += "<div class=\"title\">" + transition.name + "</div>";
 
                 dialog += "</div>";
 
@@ -193,7 +193,7 @@ export class Editor {
 
             form += "<select class=\"transition-select\">";
             for (let transitionId in event.actor.transitions)
-                form += "<option value=\"" + transitionId + "\" " + (event.transition === event.actor.transitions[transitionId] ? "selected":"") + ">" + event.actor.transitions[transitionId].phrase.getTotalText() + "</option>";
+                form += "<option value=\"" + transitionId + "\" " + (event.transition === event.actor.transitions[transitionId] ? "selected":"") + ">" + event.actor.transitions[transitionId].getLabel() + "</option>";
             form += "</select>";
         } else if (event instanceof ConversationBasedEvent) {
             form += "<select class=\"intent-select\">";
@@ -204,7 +204,7 @@ export class Editor {
 
         form += "<select class=\"action-transition-select\">";
         for (let transitionId in this.selectedActor.transitions)
-            form += "<option value=\"" + transitionId + "\" " + (event.action.transition === this.selectedActor.transitions[transitionId] ? "selected":"") + ">" + this.selectedActor.transitions[transitionId].phrase.getTotalText() + "</option>";
+            form += "<option value=\"" + transitionId + "\" " + (event.action.transition === this.selectedActor.transitions[transitionId] ? "selected":"") + ">" + this.selectedActor.transitions[transitionId].getLabel() + "</option>";
         form += "</select>";
 
         return form;
@@ -282,8 +282,7 @@ export class Editor {
     }
 
     addPointToMovement() {
-        let lastIndex = this.selectedMovement.points.length - 1;
-        this.selectedMovement.add(this.selectedMovement.points[lastIndex].add(this.selectedMovement.vectors[lastIndex].mul(3)), this.selectedMovement.vectors[lastIndex]);
+        this.selectedMovement.add(new Vector(0, 0));
     }
 
     addEvent() {
@@ -337,19 +336,18 @@ export class Editor {
                 this.selectActor(actor);
         }
 
-        this.selectedMovementPoint = null;
+        this.selectedMovementPointId = null;
     }
 
     onMouseDown(pos: Vector) {
         if (this.selectedMovement) {
-            this.selectedMovementPoint = this.selectedMovement.ray(pos);
+            this.selectedMovementPointId = this.selectedMovement.ray(pos);
         }
     }
 
     onMouseMove(pos: Vector) {
-        if (this.selectedMovementPoint) {
-            this.selectedMovementPoint.x = pos.x;
-            this.selectedMovementPoint.y = pos.y;
+        if (this.selectedMovementPointId !== null) {
+            this.selectedMovement.movePoint(this.selectedMovementPointId, pos);
         }
     }
 }

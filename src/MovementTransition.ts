@@ -4,91 +4,86 @@ import {Phrase} from "./Phrase";
 import {Teller} from "./Teller";
 import {Actor} from "./Actor";
 import {Vector} from "./Vector";
+import {BezierCurve} from "./BezierCurve";
 
 export class MovementTransition extends Transition {
-    public points: Array<Vector>;
-    public vectors: Array<Vector>;
-    public controlPoints: Array<Array<Vector>>;
+    private curves: Array<BezierCurve>;
     private time: number;
-    private totalTime: number;
+    private currentCurveId: number;
+    public name: string;
+    public speed: number;
 
     constructor(teller: Teller, actor: Actor, startPoint: Vector, endPoint: Vector) {
         super(teller, actor);
-        this.points = [startPoint, endPoint];
-        this.vectors = [
-            new Vector((endPoint.x - startPoint.x) / 4, (endPoint.y - startPoint.y) / 4),
-            new Vector((endPoint.x - startPoint.x) / 4, (endPoint.y - startPoint.y) / 4)
-        ];
-        this.calcControlPoints();
-        this.time = 0;
-        this.totalTime = 1;
+        this.curves = [new BezierCurve(startPoint, endPoint)];
+        this.name = "Test";
+        this.speed = 100;
+        this.reset();
     }
 
     protected internProceed(dt: number): boolean {
-        this.time += dt;
-        return this.time >= this.totalTime;
+        this.time += dt * this.speed;
+        return this.setPosToCurrentTime();
+    }
+
+    private setPosToCurrentTime(): boolean {
+        if (this.currentCurveId < this.curves.length) {
+            let timeLeft = this.curves[this.currentCurveId].setPosAtTime(this.time, this.actor.position);
+            if (timeLeft > 0) {
+                this.time = timeLeft;
+                this.currentCurveId++;
+                return this.setPosToCurrentTime();
+            }
+        }
+        return this.currentCurveId >= this.curves.length;
     }
 
     public reset() {
         this.time = 0;
+        this.currentCurveId = 0;
     }
 
-    public add(point: Vector, vector: Vector) {
-        this.points.push(point);
-        this.vectors.push(vector);
-        this.calcControlPoints();
-    }
-
-    private calcControlPoints() {
-        this.controlPoints = [];
-
-        for (let pointId = 0; pointId < this.points.length; pointId++) {
-            if (pointId < this.points.length - 1) {
-                let firstControlPoint = new Vector(this.points[pointId].x + this.vectors[pointId].x, this.points[pointId].y + this.vectors[pointId].y);
-                let secondControlPoint = new Vector(this.points[pointId + 1].x - this.vectors[pointId + 1].x, this.points[pointId + 1].y - this.vectors[pointId + 1].y);
-                this.controlPoints.push([firstControlPoint, secondControlPoint]);
-            }
-        }
+    public add(point: Vector) {
+        let lastCurve = this.curves[this.curves.length - 1];
+        this.curves.push(new BezierCurve(lastCurve.points[lastCurve.points.length - 1].clone(), point));
     }
 
     public drawDebug(context) {
-        for (let pointId = 0; pointId < this.points.length; pointId++) {
-
-            if (pointId < this.points.length - 1) {
-                context.beginPath();
-                context.moveTo(this.points[pointId].x, this.points[pointId].y);
-                context.bezierCurveTo(this.controlPoints[pointId][0].x, this.controlPoints[pointId][0].y, this.controlPoints[pointId][1].x, this.controlPoints[pointId][1].y, this.points[pointId + 1].x, this.points[pointId + 1].y);
-                context.stroke();
-
-                this.drawPoint(context, this.points[pointId], false);
-                this.drawPoint(context, this.controlPoints[pointId][0], true);
-                this.drawPoint(context, this.controlPoints[pointId][1], true);
-
-            } else
-                this.drawPoint(context, this.points[pointId], false);
-        }
+        for (let curveId in this.curves)
+            this.curves[curveId].drawDebug(context, curveId == this.curves.length - 1);
     }
 
-    private drawPoint(context, point: Vector, isControl: boolean) {
-        context.fillStyle = isControl ? 'yellow' : 'red';
-        context.fillRect(point.x - 5, point.y - 5, 10, 10);
+    public ray(vec: Vector): number {
+        for (let curveId in this.curves) {
+            let pointId = this.curves[curveId].ray(vec, curveId == this.curves.length - 1);
+            if (pointId !== null)
+                return pointId + curveId * 4;
+        }
+        return null;
     }
 
-    public ray(vec: Vector): Vector {
-        for (let point of this.points) {
-            if (this.rayPoint(vec, point))
-                return point;
-        }
+    public movePoint(pointId: number, newPos: Vector) {
+        let curveId = Math.floor(pointId / 4);
+        pointId = pointId % 4;
+        let prevPoint = this.curves[curveId].points[pointId].clone();
+        this.curves[curveId].movePoint(pointId, newPos);
 
-        for (let points of this.controlPoints) {
-            if (this.rayPoint(vec, points[0]))
-                return points[0];
-            if (this.rayPoint(vec, points[1]))
-                return points[1];
-        }
+        if (pointId == 0 && curveId > 0)
+            this.curves[curveId - 1].movePoint(3, this.curves[curveId].points[0]);
+        else if (pointId == 1 && curveId > 0)
+            this.curves[curveId - 1].movePoint(2, this.curves[curveId].points[0].add(this.curves[curveId].points[0].sub(this.curves[curveId].points[1])));
+        else if (pointId == 2 && curveId < this.curves.length - 1)
+            this.curves[curveId + 1].movePoint(1, this.curves[curveId].points[3].add(this.curves[curveId].points[3].sub(this.curves[curveId].points[2])));
+        else if (pointId == 3 && curveId < this.curves.length - 1)
+            this.curves[curveId + 1].movePoint(0, this.curves[curveId].points[3]);
+
+        if (pointId == 0)
+            this.movePoint(curveId * 4 + pointId + 1, newPos.sub(prevPoint).add(this.curves[curveId].points[1]));
+        else if (pointId == 3)
+            this.movePoint(curveId * 4 + pointId - 1, newPos.sub(prevPoint).add(this.curves[curveId].points[2]));
     }
 
-    private rayPoint(vec: Vector, point: Vector) {
-        return (point.x - 5 < vec.x && point.y - 5 < vec.y && point.x + 5 > vec.x && point.y + 5 > vec.y);
+    public getLabel(): string {
+        return this.name;
     }
 }
