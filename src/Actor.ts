@@ -8,6 +8,7 @@ export abstract class Actor {
     public name: string;
     private activePhrase: Phrase;
     public position: Vector;
+    public rotation: number;
     private width: number;
     private fontSize;
     private padding: Vector;
@@ -19,6 +20,7 @@ export abstract class Actor {
         this.name = name;
         this.activePhrase = null;
         this.position = position;
+        this.rotation = 0;
         this.width = null;
         this.fontSize = 20;
         this.padding = new Vector(10, 5);
@@ -48,10 +50,14 @@ export abstract class Actor {
     }
 
     write(context) {
+        context.save();
+        context.translate(this.position.x, this.position.y);
+        context.rotate(this.rotation);
         this.writeSelf(context);
 
         if (this.activePhrase !== null)
-            this.activePhrase.write(context, this.position.add(new Vector(100, -100)));
+            this.activePhrase.write(context, new Vector(100, -100));
+        context.restore();
     }
 
     getRect(): Rect {
@@ -68,8 +74,8 @@ export abstract class Actor {
             this.width = context.measureText(this.name).width;
 
         let rect = this.getRect();
-        context.fillRect(rect.x, rect.y, rect.width, rect.height);
+        context.fillRect(rect.x - this.position.x, rect.y - this.position.y, rect.width, rect.height);
         context.fillStyle = "white";
-        context.fillText(this.name, this.position.x, this.position.y);
+        context.fillText(this.name, 0, 0);
     }
 }

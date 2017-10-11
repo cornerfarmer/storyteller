@@ -94,4 +94,11 @@ export class Phrase {
             text += word.text + " ";
         return text;
     }
+
+    getTotalTime(): number {
+        let time = 0;
+        for (let word of this.words)
+            time += word.getTotalTime();
+        return time;
+    }
 }

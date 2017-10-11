@@ -15,46 +15,31 @@ import {SceneBasedEvent, SceneBasedEventType} from "./SceneBasedEvent";
 import {ConversationBasedEvent, ConversationBasedEventType} from "./ConversationBasedEvent";
 import {MovementTransition} from "./MovementTransition";
 import {Vector} from "./Vector";
+import {EditorPanelInterface} from "./EditorPanelInterface";
+import {DialogsPanel} from "./DialogsPanel";
+import {MovementsPanel} from "./MovementsPanel";
+import {StatesPanel} from "./StatesPanel";
+import {EventsPanel} from "./EventsPanel";
 
-enum EventTypes {
-    Transition,
-    Scene,
-    Conversation
-}
 
 export class Editor {
-    private $inspectorDialogs;
-    private $inspectorMovements;
-    private $inspectorStates;
     private $inspectorEvents;
-    private selectedActor: Actor;
-    private selectedState: State;
-    private selectedMovement: MovementTransition;
+    public selectedActor: Actor;
     private teller: Teller;
     private story: Story;
     private selectedPhrase: Phrase;
-    private nextInputIsNewWord: boolean;
     public isActive: boolean;
-    private selectedMovementPointId: number;
+    private panels: Array<EditorPanelInterface>;
 
     constructor(teller: Teller, story: Story) {
         this.teller = teller;
         this.story = story;
-        this.initialize();
         this.selectedPhrase = null;
         this.isActive = true;
+        let statesPanel = new StatesPanel(this, this.teller);
+        this.panels = [new DialogsPanel(this, this.teller), new MovementsPanel(this, this.teller), statesPanel, new EventsPanel(this, this.teller, statesPanel)];
     }
 
-    initialize() {
-        this.$inspectorDialogs = $("#editor #inspector #dialogs");
-        this.$inspectorMovements = $("#editor #inspector #movements");
-        this.$inspectorStates = $("#editor #inspector #states");
-        this.$inspectorEvents = $("#editor #inspector #events");
-        let that = this;
-        $("#editor #inspector #add-event").click(function () {
-            that.addEvent()
-        });
-    }
 
     selectActor(actor: Actor) {
         if (actor instanceof Character)
@@ -63,101 +48,23 @@ export class Editor {
 
     selectCharacter(character: Character) {
         this.selectedActor = character;
-        this.selectedState = character.states[0];
         this.refreshInspector();
     }
 
-    selectState(state: State) {
-        this.selectedState = state;
-        this.refreshEvents();
-    }
-
     refreshInspector() {
-        this.refreshDialogs();
-        this.refreshMovements();
-        this.refreshStates();
-        this.refreshEvents();
+        for (let panel of this.panels) {
+            panel.refresh();
+        }
     }
 
     refreshDialogs() {
-        this.$inspectorDialogs.empty();
-        this.$inspectorDialogs.append("<h2>" + this.selectedActor.name + "</h2>");
-        this.$inspectorDialogs.append("<h3>Dialogs</h3>");
-        for (let transition of this.selectedActor.transitions) {
-            if (transition instanceof DialogTransition) {
-                let dialog = "<div class=\"dialog\">";
-                dialog += "<div class=\"title\">" + transition.phrase.getTotalText() + "</div>";
-
-                //dialog += "<div class=\"add-action\"><button class=\"add-action-button\">Add action</button></div>";
-                //dialog += "</div>";
-                dialog += "</div>";
-
-                this.$inspectorDialogs.append(dialog);
-            }
-        }
-        this.$inspectorDialogs.append("<button id=\"add-dialog-button\">Add dialog</button>");
-        let that = this;
-        $("#editor #add-dialog-button").click(function () {
-            that.addDialogToCharacter(that.selectedActor);
-            $(this).blur();
-        });
-
-        this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
+        /*this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
         $("#editor #play-button").click(function () {
             that.story.start();
             that.isActive = false;
-        });
+        });*/
     }
 
-    refreshMovements() {
-        this.$inspectorMovements.empty();
-        this.$inspectorMovements.append("<h3>Movements</h3>");
-        for (let transition of this.selectedActor.transitions) {
-            if (transition instanceof MovementTransition) {
-                let dialog = "<div class=\"movement\">";
-                dialog += "<div class=\"title\">" + transition.name + "</div>";
-
-                dialog += "</div>";
-
-                this.$inspectorMovements.append(dialog);
-            }
-        }
-        this.$inspectorMovements.append("<button id=\"add-movement-button\">Add movement</button>");
-        this.$inspectorMovements.append("<button id=\"add-point-button\">Add point</button>");
-        let that = this;
-        $("#editor #add-movement-button").click(function () {
-            that.addMovementToCharacter(that.selectedActor);
-            $(this).blur();
-        });
-
-        $("#editor #add-point-button").click(function () {
-            that.addPointToMovement();
-            $(this).blur();
-        });
-
-    }
-
-    refreshStates() {
-        if (this.selectedActor instanceof Character) {
-            this.$inspectorStates.empty();
-            this.$inspectorStates.append("<h3>States</h3>");
-            let that = this;
-            for (let state of this.selectedActor.states) {
-                $("<div>" + state.name + "</div>").appendTo(this.$inspectorStates).click(function () {
-                    that.selectState(state);
-                });
-            }
-        }
-    }
-
-    getTypeOfEvent(event: Event) {
-        if (event instanceof TransitionBasedEvent)
-            return EventTypes.Transition;
-        else if (event instanceof SceneBasedEvent)
-            return EventTypes.Scene;
-        else if (event instanceof ConversationBasedEvent)
-            return EventTypes.Conversation;
-    }
 
     getEventTypesForEvent(event: Event) {
         if (event instanceof TransitionBasedEvent)
@@ -269,22 +176,6 @@ export class Editor {
         }
     }
 
-    addDialogToCharacter(character: Character) {
-        this.selectedPhrase = new Phrase();
-        character.addTransition(new DialogTransition(this.selectedPhrase, this.teller, character));
-        character.setActivePhrase(this.selectedPhrase);
-        this.nextInputIsNewWord = true;
-    }
-
-    addMovementToCharacter(character: Character) {
-        this.selectedMovement = new MovementTransition(this.teller, character, character.position.clone(), character.position.add(new Vector(200, 0)));
-        character.addTransition(this.selectedMovement);
-    }
-
-    addPointToMovement() {
-        this.selectedMovement.add(new Vector(0, 0));
-    }
-
     addEvent() {
         if (this.selectedActor.transitions.length > 0) {
             let action = new Action(0, this.selectedActor.transitions[0], this.teller, this.selectedActor);
@@ -294,40 +185,21 @@ export class Editor {
     }
 
     enterText(text: string) {
-        if (this.selectedPhrase !== null) {
-            if (text === " ") {
-                this.nextInputIsNewWord = true;
-            } else if (text === "\n") {
-                this.nextInputIsNewWord = true;
-                if (this.selectedPhrase.words.length > 0)
-                    this.selectedPhrase.words[this.selectedPhrase.words.length - 1].newLineAfterwards = true;
-            } else {
-                if (this.nextInputIsNewWord) {
-                    this.selectedPhrase.words.push(new Word(""));
-                    this.nextInputIsNewWord = false;
-                }
-                let word = this.selectedPhrase.words[this.selectedPhrase.words.length - 1];
-                word.text += text;
-                word.time = word.getTotalTime();
-                this.selectedPhrase.recalculatePositions();
-                this.refreshInspector();
-            }
+        for (let panel of this.panels) {
+            panel.enterText(text);
         }
     }
 
     removeLastChar() {
-        if (this.selectedPhrase.words.length > 0) {
-            let word = this.selectedPhrase.words[this.selectedPhrase.words.length - 1];
-            if (word.text.length > 1 || (word.text.length > 0 && this.selectedPhrase.words.length === 1))
-                word.text = word.text.substring(0, word.text.length - 1);
-            else if (this.selectedPhrase.words.length > 1)
-                this.selectedPhrase.words.pop();
+        for (let panel of this.panels) {
+            panel.removeLastChar();
         }
     }
 
     write(context) {
-        if (this.selectedMovement)
-            this.selectedMovement.drawDebug(context);
+        for (let panel of this.panels) {
+            panel.write(context);
+        }
     }
 
     onMouseUp(pos: Vector) {
@@ -335,19 +207,20 @@ export class Editor {
             if (actor.getRect().contains(pos))
                 this.selectActor(actor);
         }
-
-        this.selectedMovementPointId = null;
+        for (let panel of this.panels) {
+            panel.onMouseUp(pos);
+        }
     }
 
     onMouseDown(pos: Vector) {
-        if (this.selectedMovement) {
-            this.selectedMovementPointId = this.selectedMovement.ray(pos);
+        for (let panel of this.panels) {
+            panel.onMouseDown(pos);
         }
     }
 
     onMouseMove(pos: Vector) {
-        if (this.selectedMovementPointId !== null) {
-            this.selectedMovement.movePoint(this.selectedMovementPointId, pos);
+        for (let panel of this.panels) {
+            panel.onMouseMove(pos);
         }
     }
 }

@@ -16,7 +16,7 @@ export class MovementTransition extends Transition {
     constructor(teller: Teller, actor: Actor, startPoint: Vector, endPoint: Vector) {
         super(teller, actor);
         this.curves = [new BezierCurve(startPoint, endPoint)];
-        this.name = "Test";
+        this.name = "";
         this.speed = 100;
         this.reset();
     }
