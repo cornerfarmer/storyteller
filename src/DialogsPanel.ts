@@ -5,20 +5,25 @@ import {Editor} from "./Editor";
 import {Phrase} from "./Phrase";
 import {Word} from "./Word";
 import {Teller} from "./Teller";
+import {Story} from "./Story";
 
 export class DialogsPanel extends EditorPanel<DialogTransition> {
     private nextInputIsNewWord: boolean;
 
-    constructor(editor: Editor, teller: Teller) {
-        super("dialogs", editor, teller);
+    constructor(editor: Editor, teller: Teller, story: Story) {
+        super("dialogs", editor, teller, story);
     }
 
     protected createNewElement(): DialogTransition {
         let dialogTransition = new DialogTransition(new Phrase(), this.teller, this.getSelectedActor());
-        this.getSelectedActor().addTransition(dialogTransition);
         this.getSelectedActor().setActivePhrase(dialogTransition.phrase);
         this.nextInputIsNewWord = true;
         return dialogTransition
+    }
+
+    protected addElementToElements(element: DialogTransition): number {
+        this.getSelectedActor().addTransition(element);
+        return this.getSelectedActor().transitions.length - 1;
     }
 
     protected getElements(): Array<DialogTransition> {
@@ -36,10 +41,15 @@ export class DialogsPanel extends EditorPanel<DialogTransition> {
     }
 
 
-    public selectElement(element: DialogTransition) {
-        super.selectElement(element);
-        this.getSelectedActor().setActivePhrase(element.phrase);
-        element.phrase.proceed(element.phrase.getTotalTime() + 0.01);
+    public selectElement(element: DialogTransition, index: number) {
+        super.selectElement(element, index);
+
+        if (element) {
+            this.getSelectedActor().setActivePhrase(element.phrase);
+            element.phrase.proceed(element.phrase.getTotalTime() + 0.01);
+        } else {
+            this.getSelectedActor().setActivePhrase(null);
+        }
     }
 
     public enterText(text: string) {

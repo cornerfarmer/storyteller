@@ -36,8 +36,8 @@ export class Editor {
         this.story = story;
         this.selectedPhrase = null;
         this.isActive = true;
-        let statesPanel = new StatesPanel(this, this.teller);
-        this.panels = [new DialogsPanel(this, this.teller), new MovementsPanel(this, this.teller), statesPanel, new EventsPanel(this, this.teller, statesPanel)];
+        let statesPanel = new StatesPanel(this, this.teller, this.story);
+        this.panels = [new DialogsPanel(this, this.teller, this.story), new MovementsPanel(this, this.teller, this.story), statesPanel, new EventsPanel(this, this.teller, this.story, statesPanel)];
     }
 
 
@@ -57,22 +57,18 @@ export class Editor {
         }
     }
 
+    deselectAll() {
+        for (let panel of this.panels) {
+            panel.deselect();
+        }
+    }
+
     refreshDialogs() {
         /*this.$inspectorDialogs.append("<button id=\"play-button\">Play/Stop</button>");
         $("#editor #play-button").click(function () {
             that.story.start();
             that.isActive = false;
         });*/
-    }
-
-
-    getEventTypesForEvent(event: Event) {
-        if (event instanceof TransitionBasedEvent)
-            return TransitionBasedEventType;
-        else if (event instanceof SceneBasedEvent)
-            return SceneBasedEventType;
-        else if (event instanceof ConversationBasedEvent)
-            return ConversationBasedEventType;
     }
 
     createFormHtmlForEvent(event: Event) {

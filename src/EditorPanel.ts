@@ -5,33 +5,35 @@ import {Actor} from "./Actor";
 import {EditorPanelInterface} from "./EditorPanelInterface";
 import {Teller} from "./Teller";
 import {Vector} from "./Vector";
+import {Story} from "./Story";
 
 export abstract class EditorPanel<T> implements EditorPanelInterface {
-    private $panel;
+    protected $panel;
     private name: string;
     protected editor: Editor;
     protected teller: Teller;
+    protected story: Story;
     public selectedElement: T;
+    public selectedElementIndex: number;
 
-    constructor(name, editor: Editor, teller: Teller) {
+    constructor(name, editor: Editor, teller: Teller, story: Story) {
         this.$panel = $('#' + name);
         this.name = name;
         this.editor = editor;
         this.teller = teller;
+        this.story = story;
         this.selectedElement = null;
+        this.selectedElementIndex = -1;
     }
 
     public addNewElement() {
-        this.selectedElement = this.createNewElement();
-        if (this.selectedElement !== null) {
-            this.saveElement(this.selectedElement);
-            this.getElements().push(this.selectedElement);
-            this.refresh();
-        }
+        this.addElementToElements(this.selectedElement);
+        this.refresh();
     }
 
-    public selectElement(element: T) {
+    public selectElement(element: T, index: number) {
         this.selectedElement = element;
+        this.selectedElementIndex = index;
         this.refresh();
     }
 
@@ -40,6 +42,7 @@ export abstract class EditorPanel<T> implements EditorPanelInterface {
     }
 
     protected abstract createNewElement(): T;
+    protected abstract addElementToElements(element: T): number;
     protected abstract getElements(): Array<T>;
     protected abstract getLabelForElement(element: T): string;
     public enterText(text: string) {};
@@ -52,7 +55,10 @@ export abstract class EditorPanel<T> implements EditorPanelInterface {
     protected getJQueryElement(id: string) {
         return this.$panel.find("#" + id);
     }
-    protected saveElement(element: T) {};
+
+    public deselect() {
+        this.selectElement(null, -1);
+    }
 
     public refresh() {
         let that = this;
@@ -63,26 +69,41 @@ export abstract class EditorPanel<T> implements EditorPanelInterface {
         let i = 0;
         for (let element of this.getElements()) {
             this.$panel.append("<div id=\"" + this.name + "-" + i + "\">" + this.getLabelForElement(element) + "</div>");
+            let index = i;
             $("#editor #" + this.name + "-" + i).click(function () {
-                that.selectElement(element);
+                that.editor.deselectAll();
+                that.selectElement(element, index);
                 $(this).blur();
             });
             i++;
         }
 
-        this.addElementToolbar(this.$panel, this.selectedElement);
+        if (this.selectedElement !== null) {
+            this.addElementToolbar(this.$panel, this.selectedElement);
 
-        this.$panel.append("<button id=\"save-" + this.name + "-button\">Save</button>");
-        $("#editor #save-" + this.name + "-button").click(function () {
-            that.saveElement(that.selectedElement);
-            that.refresh();
-            $(this).blur();
-        });
-
-        this.$panel.append("<button id=\"add-" + this.name + "-button\">Create</button>");
-        $("#editor #add-" + this.name + "-button").click(function () {
-            that.addNewElement();
-            $(this).blur();
-        });
+            if (this.getElements().indexOf(this.selectedElement) == -1) {
+                this.$panel.append("<br><button id=\"add-" + this.name + "-button\">Add</button>");
+                $("#editor #add-" + this.name + "-button").click(function () {
+                    that.addNewElement();
+                    $(this).blur();
+                });
+            } else {
+                this.$panel.append("<br><button id=\"new-" + this.name + "-button\">New</button>");
+                $("#editor #new-" + this.name + "-button").click(function () {
+                    that.selectedElement = that.createNewElement();
+                    that.refresh();
+                    $(this).blur();
+                });
+            }
+        } else {
+            this.$panel.append("<br><button id=\"new-" + this.name + "-button\">New</button>");
+            $("#editor #new-" + this.name + "-button").click(function () {
+                that.editor.deselectAll();
+                that.selectedElement = that.createNewElement();
+                that.selectedElementIndex = -1;
+                that.refresh();
+                $(this).blur();
+            });
+        }
     }
 }

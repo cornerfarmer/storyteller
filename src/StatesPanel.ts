@@ -6,11 +6,12 @@ import {Phrase} from "./Phrase";
 import {Word} from "./Word";
 import {Teller} from "./Teller";
 import {State} from "./State";
+import {Story} from "./Story";
 
 export class StatesPanel extends EditorPanel<State> {
 
-    constructor(editor: Editor, teller: Teller) {
-        super("states", editor, teller);
+    constructor(editor: Editor, teller: Teller, story: Story) {
+        super("states", editor, teller, story);
     }
 
     protected createNewElement(): State {

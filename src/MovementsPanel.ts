@@ -8,23 +8,23 @@ import {Word} from "./Word";
 import {Teller} from "./Teller";
 import {MovementTransition} from "./MovementTransition";
 import {Vector} from "./Vector";
+import {Story} from "./Story";
 
 export class MovementsPanel extends EditorPanel<MovementTransition> {
     private selectedMovementPointId: number;
 
-    constructor(editor: Editor, teller: Teller) {
-        super("movements", editor, teller);
+    constructor(editor: Editor, teller: Teller, story: Story) {
+        super("movements", editor, teller, story);
         this.selectedMovementPointId = null;
     }
 
     protected createNewElement(): MovementTransition {
-        let transition = new MovementTransition(this.teller, this.getSelectedActor(), this.getSelectedActor().position.clone(), this.getSelectedActor().position.add(new Vector(200, 0)));
-        this.getSelectedActor().addTransition(transition);
-        return transition;
+        return new MovementTransition(this.teller, this.getSelectedActor(), this.getSelectedActor().position.clone(), this.getSelectedActor().position.add(new Vector(200, 0)));
     }
 
-    protected saveElement(element: MovementTransition) {
-        element.name = this.getJQueryElement("name-input").val();
+    protected addElementToElements(element: MovementTransition) {
+        this.getSelectedActor().addTransition(element);
+        return this.getSelectedActor().transitions.length - 1;
     }
 
     protected getElements(): Array<MovementTransition> {
@@ -47,7 +47,12 @@ export class MovementsPanel extends EditorPanel<MovementTransition> {
 
     protected addElementToolbar($panel, element: MovementTransition) {
         let that = this;
-        $panel.append("<input id=\"name-input\" value=\"" + (element == null ? "Name" : element.name) + "\">");
+        $panel.append("<input id=\"name-input\" value=\"" + element.name + "\">");
+        $panel.find("#name-input").change(function () {
+            that.selectedElement.name = $(this).val();
+            that.refresh();
+        });
+
         $panel.append("<button id=\"add-point-button\">Add point</button>");
         $("#editor #add-point-button").click(function () {
             that.addPointToMovement();
