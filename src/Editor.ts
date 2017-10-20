@@ -20,6 +20,7 @@ import {DialogsPanel} from "./DialogsPanel";
 import {MovementsPanel} from "./MovementsPanel";
 import {StatesPanel} from "./StatesPanel";
 import {EventsPanel} from "./EventsPanel";
+import {KeyFramingPanel} from "./KeyFramingPanel";
 
 
 export class Editor {
@@ -37,7 +38,7 @@ export class Editor {
         this.selectedPhrase = null;
         this.isActive = true;
         let statesPanel = new StatesPanel(this, this.teller, this.story);
-        this.panels = [new DialogsPanel(this, this.teller, this.story), new MovementsPanel(this, this.teller, this.story), statesPanel, new EventsPanel(this, this.teller, this.story, statesPanel)];
+        this.panels = [new DialogsPanel(this, this.teller, this.story), new MovementsPanel(this, this.teller, this.story), new KeyFramingPanel(this, this.teller, this.story), statesPanel, new EventsPanel(this, this.teller, this.story, statesPanel)];
     }
 
 
